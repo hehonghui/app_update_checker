@@ -49,7 +49,7 @@ print apk_list
 
 index = len(apk_list) - 1
 # 最新版的apk
-lastest_apk = apk_list.pop( )
+lastest_apk = apk_list.pop()
 print "最新版的apk ==> "+ lastest_apk
 
 device = MonkeyRunner.waitForConnection()
@@ -63,68 +63,88 @@ screenshot_dir = "apk_screenshots"
 
 
 # 开始自动升级检测
-def start_update_test(apks_list,lastest):
+def start_update_test():
     for apk in apk_list:
         if apk.endswith(".apk"):
+            # 截图的子目录名
+            scr_dir = get_apk_name(apk) + "-" + get_apk_name(lastest_apk)
+            # 创建截屏目录
+            os.mkdir(screenshot_dir + seprator + scr_dir)
             print "安装 ==> " + apk
             # 清除最新版apk
             os.system("adb uninstall com.newsdog")
-            # 执行操作
-    print "安装最新版的apk ==> " + lastest
-    device.installPackage(lastest)
-    test_latest_apk(lastest)
+
+            # ===> 安装旧版的apk
+            device.installPackage(apk)
+            # 执行测试
+            test_latest_apk(scr_dir, apk)
+
+            # ===> 安装最新版
+            print "安装最新版的apk ==> " + lastest_apk
+            device.installPackage(lastest_apk)
+            # 启动应用
+            device.startActivity('com.newsdog/.mvp.ui.splash.SplashActivity')
+            # 执行测试
+            MonkeyRunner.sleep(10)
+            # 随机点击一下
+            click(600, 1080)
+            # 截图
+            take_screen_shot(scr_dir, '6_latest-main.png')
 
 
+# 获取apk名字
 def get_apk_name(full_name):
     session = full_name.split(seprator)
-    return session[ len(session) - 1 ]
+    apk_name = session[len(session) - 1]
+    return apk_name.replace("NewsDog_", "").replace(".apk", "")
 
 
-def test_latest_apk(apk_file):
+# 分版本点击不同的区域即可
+def test_latest_apk(scr_dir, apk_file):
 
-    print "start ==> " + apk_file
     print "version ==> " + get_apk_name(apk_file)
 
     device.startActivity('com.newsdog/.mvp.ui.splash.SplashActivity')
     MonkeyRunner.sleep(2)
     print "等待选择语言"
-    take_screen_shot('lan_choose.png')
+    take_screen_shot(scr_dir, '1_lan_choose.png')
     # 点击english按钮
     click(600, 900)
     MonkeyRunner.sleep(8)
 
     # 感兴趣页面
-    take_screen_shot('interest_choose.png')
+    take_screen_shot(scr_dir, '2_interest_choose.png')
     click(950, 100)
     print "跳过兴趣选择"
     MonkeyRunner.sleep(2)
 
     # 在主页
-    take_screen_shot('in_main.png')
+    take_screen_shot(scr_dir, '3_in_main.png')
     # 弹出兴趣选择
     MonkeyRunner.sleep(10)
 
     # 弹出quick 选择框
-    take_screen_shot('quick_view_dialog.png')
+    take_screen_shot(scr_dir, '4_quick_view_dialog.png')
     # 选择开启quick view
     click(600, 1080)
 
     MonkeyRunner.sleep(8)
-    take_screen_shot('main.png')
+    take_screen_shot(scr_dir, '5_main.png')
 
 
-def take_screen_shot(name):
+def take_screen_shot(scr_dir, name):
     # 截取屏幕截图
     result = device.takeSnapshot()
     # 将截图保存至文件
-    result.writeToFile(screenshot_dir + seprator + name, 'png')
+    result.writeToFile(screenshot_dir + seprator + scr_dir + seprator + name, 'png')
 
 
 def click(x, y):
     device.touch(x, y, MonkeyDevice.DOWN_AND_UP)
 
 
-start_update_test(apk_list, lastest_apk)
+# 开始测试
+start_update_test()
 
 
 
