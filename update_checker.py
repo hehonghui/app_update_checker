@@ -3,8 +3,11 @@
 
 import os
 import sys
-print sys.path
 from com.android.monkeyrunner import MonkeyRunner, MonkeyDevice
+
+from com.android.monkeyrunner import MonkeyImage
+from com.android.monkeyrunner.easy import EasyMonkeyDevice
+from com.android.monkeyrunner.easy import By
 import platform
 
 # windows的风格
@@ -50,6 +53,13 @@ lastest_apk = apk_list.pop( )
 print "最新版的apk ==> "+ lastest_apk
 
 device = MonkeyRunner.waitForConnection()
+easy_device = EasyMonkeyDevice(device)
+
+package_name = "com.newsdog"
+
+os.system("rm -rf apk_screenshots")
+os.system("mkdir apk_screenshots")
+screenshot_dir = "apk_screenshots"
 
 
 # 开始自动升级检测
@@ -62,6 +72,56 @@ def start_update_test(apks_list,lastest):
             # 执行操作
     print "安装最新版的apk ==> " + lastest
     device.installPackage(lastest)
+    test_latest_apk(lastest)
+
+
+def get_apk_name(full_name):
+    session = full_name.split(seprator)
+    return session[ len(session) - 1 ]
+
+
+def test_latest_apk(apk_file):
+
+    print "start ==> " + apk_file
+    print "version ==> " + get_apk_name(apk_file)
+
+    device.startActivity('com.newsdog/.mvp.ui.splash.SplashActivity')
+    MonkeyRunner.sleep(2)
+    print "等待选择语言"
+    take_screen_shot('lan_choose.png')
+    # 点击english按钮
+    click(600, 900)
+    MonkeyRunner.sleep(8)
+
+    # 感兴趣页面
+    take_screen_shot('interest_choose.png')
+    click(950, 100)
+    print "跳过兴趣选择"
+    MonkeyRunner.sleep(2)
+
+    # 在主页
+    take_screen_shot('in_main.png')
+    # 弹出兴趣选择
+    MonkeyRunner.sleep(10)
+
+    # 弹出quick 选择框
+    take_screen_shot('quick_view_dialog.png')
+    # 选择开启quick view
+    click(600, 1080)
+
+    MonkeyRunner.sleep(8)
+    take_screen_shot('main.png')
+
+
+def take_screen_shot(name):
+    # 截取屏幕截图
+    result = device.takeSnapshot()
+    # 将截图保存至文件
+    result.writeToFile(screenshot_dir + seprator + name, 'png')
+
+
+def click(x, y):
+    device.touch(x, y, MonkeyDevice.DOWN_AND_UP)
 
 
 start_update_test(apk_list, lastest_apk)
