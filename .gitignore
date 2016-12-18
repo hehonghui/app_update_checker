@@ -1,4 +1,5 @@
 apks_dir
 */**/.DS*
 .DS*
+.idea/
 apk_screenshots/
